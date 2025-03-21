@@ -1,13 +1,15 @@
-import { useAuth } from "@/context/AuthContext"
 import { useState } from "react"
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native"
 import { Button, Card, Text, TextInput, Title } from "react-native-paper"
+import { useAuth } from "../context/AuthContext"
 
 export default function Auth({ onAuthSuccess }:any) {
   const { login, register } = useAuth()
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
 
@@ -29,14 +31,14 @@ export default function Auth({ onAuthSuccess }:any) {
   }
 
   async function handleRegister() {
-    if (!name || !email || !password) {
+    if (!username || !email || !password) {
       Alert.alert("Lỗi", "Vui lòng nhập email và mật khẩu")
       return
     }
 
     setLoading(true)
     try {
-      await register(name, email, password)
+      await register(username, email, password, firstName, lastName)
       Alert.alert("Đăng ký thành công", "Tài khoản của bạn đã được tạo thành công!")
       setIsLogin(true)
     } catch (error:any) {

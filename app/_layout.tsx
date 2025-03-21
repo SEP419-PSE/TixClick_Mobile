@@ -1,6 +1,6 @@
 import "./global.css";
-import LoginScreen from "./screens/Auth/LoginScreen";
+import AppNavigator from "./navigation/AppNavigator";
 
 export default function RootLayout() {
-  return <LoginScreen/>;
+  return <AppNavigator/>;
 }

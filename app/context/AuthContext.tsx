@@ -6,8 +6,8 @@ import { loginUser, registerUser } from "@/app/lib/api"
 type AuthContextType = {
   user: any | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  login: (username: string, password: string) => Promise<void>
+  register: (username: string, email: string, password: string, firstName: string, lastName: string) => Promise<void>
   logout: () => Promise<void>
   token: string | null
 }
@@ -48,10 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStoredData()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     try {
       setIsLoading(true)
-      const response = await loginUser(email, password)
+      const response = await loginUser(username, password)
 
       const { user: userData, token: authToken } = response
 
@@ -68,10 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (username: string, email: string, password: string, firstName: string, lastName: string) => {
     try {
       setIsLoading(true)
-      const response = await registerUser(name, email, password)
+      const response = await registerUser(username, email, password, firstName, lastName)
 
       const { user: userData, token: authToken } = response
 
