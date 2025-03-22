@@ -3,7 +3,7 @@ import { useAuth } from "@/app/context/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { useState } from "react"
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Alert, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { Button, TextInput } from "react-native-paper"
 
 const RegisterScreen = () => {
@@ -34,6 +34,7 @@ const RegisterScreen = () => {
   }
 
   return (
+    <Pressable onPress={Keyboard.dismiss}style={styles.container}>
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.keyboardView}>
@@ -220,6 +221,7 @@ const RegisterScreen = () => {
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
+    </Pressable>
   )
 }
 

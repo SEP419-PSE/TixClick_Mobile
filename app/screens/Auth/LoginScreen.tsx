@@ -5,8 +5,10 @@ import { useState } from "react";
 import {
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -43,6 +45,7 @@ const LoginScreen = () => {
       setIsSubmitting(false);
     }
   };return (
+    <Pressable onPress={Keyboard.dismiss}style={styles.container}>
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
@@ -161,6 +164,7 @@ const LoginScreen = () => {
         <Text style={styles.copyright}>© 2025 Event Ticket App. All rights reserved.</Text>
       </KeyboardAvoidingView>
     </View>
+    </Pressable>
   )
 }
 
