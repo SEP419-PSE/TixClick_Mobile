@@ -33,5 +33,65 @@ export const registerUser = async (
   }
 }
 
+export const fetchEvents = async () => {
+  try {
+    const response = await api.get("/events")
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch events")
+  }
+}
+
+export const fetchUserTickets = async (token: string | null) => {
+  try {
+    const response = await api.get("/tickets", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch tickets")
+  }
+}
+
+export const fetchTicketDetails = async (ticketId: string, token: string | null) => {
+  try {
+    const response = await api.get(`/tickets/${ticketId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch ticket details")
+  }
+}
+
+export const checkInTicket = async (ticketId: string, token: string | null) => {
+  try {
+    const response = await api.post(
+      `/tickets/${ticketId}/check-in`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to check in ticket")
+  }
+}
+
+export const checkOutTicket = async (ticketId: string, token: string | null) => {
+  try {
+    const response = await api.post(
+      `/tickets/${ticketId}/check-out`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to check out ticket")
+  }
+}
 
 
