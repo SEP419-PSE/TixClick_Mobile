@@ -1,97 +1,75 @@
-import axios from 'axios';
+const API_BASE_URL = "https://160.191.175.172:8443"
 
-const API_BASE_URL = "http://160.191.175.172:8080"
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-})
-
-export const loginUser = async (username: string, password: string) => {
-  try {
-    const response = await api.post("/auth/login", { username, password })
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Login failed")
-  }
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+  code?: number;
 }
 
-export const registerUser = async (
-  username: string,
-  email: string,
-  password: string,
-  firstName: string,
-  lastName: string,
-) => {
-  try {
-    const response = await api.post("/auth/register", { username, email, password, firstName, lastName })
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Registration failed")
-  }
+interface AuthData {
+  accessToken: string;
+  refreshToken: string;
+  role: string;
+  status: string;
 }
 
-export const fetchEvents = async () => {
+// Updated login function to match the new implementation
+export const loginUser = async (userName: string, password: string): Promise<ApiResponse<AuthData>> => {
   try {
-    const response = await api.get("/events")
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch events")
-  }
-}
-
-export const fetchUserTickets = async (token: string | null) => {
-  try {
-    const response = await api.get("/tickets", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch tickets")
-  }
-}
-
-export const fetchTicketDetails = async (ticketId: string, token: string | null) => {
-  try {
-    const response = await api.get(`/tickets/${ticketId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch ticket details")
-  }
-}
-
-export const checkInTicket = async (ticketId: string, token: string | null) => {
-  try {
-    const response = await api.post(
-      `/tickets/${ticketId}/check-in`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    console.log("Calling loginUser API with username:", userName);
+    
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    )
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to check in ticket")
-  }
-}
+      body: JSON.stringify({ userName, password }), // Using userName instead of username
+    });
 
-export const checkOutTicket = async (ticketId: string, token: string | null) => {
+    const data = await response.json();
+    console.log("Login API response:", data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: {
+          accessToken: data.result.accessToken,
+          refreshToken: data.result.refreshToken,
+          role: data.result.roleName,
+          status: data.result.status,
+        },
+        message: data.message,
+        code: data.code
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || 'Đăng nhập thất bại',
+        code: data.code,
+      };
+    }
+  } catch (error) {
+    console.error("Login API error:", error);
+    throw new Error('Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng');
+  }
+};
+
+// Keep other API functions as needed
+export const checkApiConnection = async (): Promise<ApiResponse> => {
   try {
-    const response = await api.post(
-      `/tickets/${ticketId}/check-out`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    )
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to check out ticket")
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
+    
+    const data = await response.json();
+    return {
+      success: response.ok,
+      message: data.message || 'Connection successful',
+    };
+  } catch (error) {
+    console.error("API connection check failed:", error);
+    throw new Error('Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng');
   }
-}
-
-
+};

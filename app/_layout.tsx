@@ -1,6 +1,11 @@
+import { AuthProvider } from "./context/AuthContext";
 import "./global.css";
-import AppNavigator from "./navigation/AppNavigator";
+import LoginScreen from "./screens/Auth/LoginScreen";
 
 export default function RootLayout() {
-  return <AppNavigator/>;
+  return (
+    <AuthProvider>
+      <LoginScreen />
+    </AuthProvider>
+  );
 }

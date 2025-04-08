@@ -1,9 +1,8 @@
 
-import { useEffect, useState } from "react"
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from "react-native"
-import { Card, Title, Paragraph } from "react-native-paper"
 import { useNavigation } from "@react-navigation/native"
-import { fetchEvents } from "@/app/lib/api"
+import { useEffect, useState } from "react"
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Card, Paragraph, Title } from "react-native-paper"
 
 type Event = {
   id: string
@@ -21,15 +20,15 @@ const HomeScreen = () => {
   const navigation = useNavigation()
 
   const loadEvents = async () => {
-    try {
-      setLoading(true)
-      const data = await fetchEvents()
-      setEvents(data)
-    } catch (error) {
-      console.error("Error loading events:", error)
-    } finally {
-      setLoading(false)
-    }
+    // try {
+    //   setLoading(true)
+    //   const data = await fetchEvents()
+    //   setEvents(data)
+    // } catch (error) {
+    //   console.error("Error loading events:", error)
+    // } finally {
+    //   setLoading(false)
+    // }
   }
 
   const onRefresh = async () => {
@@ -59,7 +58,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Upcoming Events</Text>
 
-      <FlatList
+      {/* <FlatList
         data={events}
         renderItem={renderEventCard}
         keyExtractor={(item) => item.id}
@@ -70,7 +69,7 @@ const HomeScreen = () => {
             <Text style={styles.emptyText}>{loading ? "Loading events..." : "No upcoming events found"}</Text>
           </View>
         }
-      />
+      /> */}
     </View>
   )
 }
