@@ -1,14 +1,11 @@
 import { useAuth } from "@/app/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import {
   Alert,
   Image,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -16,7 +13,9 @@ import {
   View
 } from "react-native";
 import { Button, Checkbox, TextInput } from "react-native-paper";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { loginUser } from "@/app/lib/api";
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("")
@@ -24,28 +23,107 @@ const LoginScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
-  const { login } = useAuth()
+  const { login, checkConnection } = useAuth()
   const navigation = useNavigation()
+
+  // Load saved username if remember me was checked
+  useState(() => {
+    const loadSavedUsername = async () => {
+      try {
+        const savedUsername = await AsyncStorage.getItem("savedUsername")
+        const savedRememberMe = await AsyncStorage.getItem("rememberMe")
+        
+        if (savedUsername && savedRememberMe === "true") {
+          setUsername(savedUsername)
+          setRememberMe(true)
+        }
+      } catch (error) {
+        console.log("Error loading saved username:", error)
+      }
+    }
+    
+    loadSavedUsername()
+  })
 
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
+      console.log("Login validation failed: missing fields")
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin")
+      return
     }
 
     try {
-      setIsSubmitting(true);
-      await login(username, password);
+      console.log("Attempting login with username:", username)
+      setIsSubmitting(true)
+      
+      // Check connection first
+      const isConnected = await checkConnection()
+      if (!isConnected) {
+        Alert.alert("Lỗi kết nối", "Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng", [
+          {
+            text: "Kiểm tra kết nối",
+            onPress: () => {
+              console.log("Navigating to API test screen")
+              navigation.navigate("ApiTest" as never)
+            },
+          },
+          { text: "OK" },
+        ])
+        return
+      }
+      
+      // Save username if remember me is checked
+      if (rememberMe) {
+        await AsyncStorage.setItem("savedUsername", username)
+        await AsyncStorage.setItem("rememberMe", "true")
+      } else {
+        await AsyncStorage.removeItem("savedUsername")
+        await AsyncStorage.removeItem("rememberMe")
+      }
+      
+      // Call the updated login API
+      const response = await loginUser(username, password)
+      
+      if (response.success && response.data) {
+        console.log("Login successful, saving token and role")
+        
+        // Save token and role using the new auth context
+        await login(response.data.accessToken, response.data.role)
+        
+        // Navigate to home or main screen
+        // This depends on your navigation setup - adjust as needed
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" as never }],
+        })
+      } else {
+        Alert.alert("Đăng nhập thất bại", response.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
+      }
+      
     } catch (error: any) {
-      Alert.alert(
-        "Login Failed",
-        error.message || "Please check your credentials and try again"
-      );
+      console.log("Login failed:", error.message)
+
+      // Kiểm tra các loại lỗi
+      if (error.message.includes("Không thể kết nối") || error.message.includes("hết thời gian chờ")) {
+        Alert.alert("Lỗi kết nối", error.message, [
+          {
+            text: "Kiểm tra kết nối",
+            onPress: () => {
+              console.log("Navigating to API test screen")
+              navigation.navigate("ApiTest" as never)
+            },
+          },
+          { text: "OK" },
+        ])
+      } else {
+        Alert.alert("Đăng nhập thất bại", error.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
+      }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };return (
-    <Pressable onPress={Keyboard.dismiss}style={styles.container}>
+  }
+
+  return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
@@ -53,8 +131,8 @@ const LoginScreen = () => {
           <View style={styles.orangeBorder} />
 
           <View style={styles.logoContainer}>
+            {/* <Image source={require("../../assets/logo.png")} style={styles.logo} resizeMode="contain" /> */}
             <Image source={require("../../../assets/images/Logo.png")} style={styles.logo} resizeMode="contain" />
-            
             <Text style={styles.title}>Quản lý vé sự kiện</Text>
             <Text style={styles.subtitle}>Nhập thông tin đăng nhập để truy cập hệ thống</Text>
           </View>
@@ -67,7 +145,10 @@ const LoginScreen = () => {
               </View>
               <TextInput
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={(text) => {
+                  console.log("🔑 Username input changed")
+                  setUsername(text)
+                }}
                 mode="flat"
                 style={styles.input}
                 placeholder="Nhập tên đăng nhập"
@@ -95,7 +176,10 @@ const LoginScreen = () => {
               </View>
               <TextInput
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  console.log("🔑 Password input changed")
+                  setPassword(text)
+                }}
                 mode="flat"
                 style={styles.input}
                 placeholder="Nhập mật khẩu"
@@ -116,7 +200,10 @@ const LoginScreen = () => {
                 right={
                   <TextInput.Icon
                     icon={passwordVisible ? "eye-off" : "eye"}
-                    onPress={() => setPasswordVisible(!passwordVisible)}
+                    onPress={() => {
+                      console.log("🔑 Password visibility toggled")
+                      setPasswordVisible(!passwordVisible)
+                    }}
                     color="#6c757d"
                   />
                 }
@@ -127,14 +214,22 @@ const LoginScreen = () => {
               <View style={styles.rememberContainer}>
                 <Checkbox
                   status={rememberMe ? "checked" : "unchecked"}
-                  onPress={() => setRememberMe(!rememberMe)}
+                  onPress={() => {
+                    console.log("🔑 Remember me toggled:", !rememberMe)
+                    setRememberMe(!rememberMe)
+                  }}
                   color="#FF8C00"
                   uncheckedColor="#6c757d"
                 />
                 <Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text>
               </View>
 
-              <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword" as never)}>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("🔑 Navigating to forgot password screen")
+                  navigation.navigate("ForgotPassword" as never)
+                }}
+              >
                 <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
               </TouchableOpacity>
             </View>
@@ -154,7 +249,12 @@ const LoginScreen = () => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Chưa có tài khoản? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Register" as never)}>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("🔑 Navigating to register screen")
+                  navigation.navigate("Register" as never)
+                }}
+              >
                 <Text style={styles.footerLink}>Đăng ký</Text>
               </TouchableOpacity>
             </View>
@@ -164,7 +264,6 @@ const LoginScreen = () => {
         <Text style={styles.copyright}>© 2025 Event Ticket App. All rights reserved.</Text>
       </KeyboardAvoidingView>
     </View>
-    </Pressable>
   )
 }
 
@@ -294,4 +393,3 @@ const styles = StyleSheet.create({
 })
 
 export default LoginScreen
-
