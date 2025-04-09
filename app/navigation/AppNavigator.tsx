@@ -7,7 +7,7 @@ import RegisterScreen from "../screens/Auth/RegisterScreen"
 import HomeScreen from "../screens/Home/HomeScreen"
 import TicketDetailsScreen from "../screens/Ticket/TicketDetailsScreen"
 import TicketsScreen from "../screens/Ticket/TicketsScreen"
-
+import { useEffect } from "react"
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -17,7 +17,6 @@ const AuthStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
-     
     </Stack.Navigator>
   )
 }
@@ -34,6 +33,7 @@ const TicketsStack = () => {
 const MainTabs = () => {
   return (
     <Tab.Navigator
+      initialRouteName="Tickets" // Start with Tickets tab
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName
@@ -56,8 +56,8 @@ const MainTabs = () => {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Tickets" component={TicketsStack} options={{ headerShown: false }} />
+      <Tab.Screen name="Home" component={HomeScreen} />
     </Tab.Navigator>
   )
 }
