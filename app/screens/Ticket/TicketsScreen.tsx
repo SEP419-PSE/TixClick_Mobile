@@ -1,14 +1,15 @@
-"use client"
-
 import { useAuth } from "@/app/context/AuthContext"
-import { fetchUserTickets } from "@/app/lib/api"
 import { useNavigation } from "@react-navigation/native"
 import { useEffect, useState } from "react"
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { Badge, Button, Card } from "react-native-paper"
+import { ActivityIndicator, Badge, Button, Card, Chip, Searchbar } from "react-native-paper"
+import { fetchUserTickets } from "../../lib/api" // Update this path to your actual API file
+import { Ionicons } from "@expo/vector-icons"
+import { ScrollView } from "react-native-gesture-handler"
+import { COLORS } from "@/app/utils/theme"
 
 
-type Ticket = {
+export interface Ticket {
   id: string
   eventId: string
   eventTitle: string
@@ -17,19 +18,27 @@ type Ticket = {
   ticketType: string
   status: "unused" | "checked_in" | "checked_out"
   qrCode: string
+  price?: number
+  quantity?: number
 }
+
+type RootStackParamList = {
+  TicketDetails: { ticket: Ticket };
+};
 
 const TicketsScreen = () => {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const navigation = useNavigation()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string | null>(null)
+  const navigation = useNavigation<any>()
   const { token } = useAuth()
 
   const loadTickets = async () => {
     try {
       setLoading(true)
-      const data = await fetchUserTickets(token)
+      const data = await fetchUserTickets(token || "")
       setTickets(data)
     } catch (error) {
       console.error("Error loading tickets:", error)
@@ -51,13 +60,13 @@ const TicketsScreen = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "unused":
-        return "#2196F3" // Blue
+        return COLORS.statusUnused 
       case "checked_in":
-        return "#4CAF50" // Green
+        return COLORS.statusCheckedIn 
       case "checked_out":
-        return "#9E9E9E" // Grey
+        return COLORS.statusCheckedOut 
       default:
-        return "#2196F3"
+        return COLORS.statusUnused
     }
   }
 
@@ -74,8 +83,24 @@ const TicketsScreen = () => {
     }
   }
 
+  const handleViewDetails = (ticket: Ticket) => {
+    navigation.navigate('TicketDetails', { ticket })
+  }
+
+  const onChangeSearch = (query: string) => setSearchQuery(query);
+
+  const filteredTickets = tickets.filter(ticket => {
+    const matchesSearch = ticket.eventTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ticket.eventLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ticket.ticketType.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFilter = filterStatus ? ticket.status === filterStatus : true;
+    
+    return matchesSearch && matchesFilter;
+  });
+
   const renderTicketCard = ({ item }: { item: Ticket }) => (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={() => handleViewDetails(item)}>
       <Card style={styles.card}>
         <Card.Content>
           <View style={styles.cardHeader}>
@@ -83,14 +108,42 @@ const TicketsScreen = () => {
             <Badge style={{ backgroundColor: getStatusColor(item.status) }}>{getStatusText(item.status)}</Badge>
           </View>
 
-          <Text style={styles.ticketInfo}>{item.eventDate}</Text>
-          <Text style={styles.ticketInfo}>{item.eventLocation}</Text>
-          <Text style={styles.ticketType}>{item.ticketType}</Text>
+          <View style={styles.ticketInfo}>
+            <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+            <Text style={styles.infoText}>{item.eventDate}</Text>
+          </View>
+          
+          <View style={styles.ticketInfo}>
+            <Ionicons name="location-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+            <Text style={styles.infoText}>{item.eventLocation}</Text>
+          </View>
+          
+          <View style={styles.ticketInfo}>
+            <Ionicons name="ticket-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+            <Text style={styles.ticketType}>{item.ticketType}</Text>
+          </View>
+          
+          {item.price !== undefined && (
+            <View style={styles.ticketInfo}>
+              <Ionicons name="pricetag-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+              <Text style={styles.ticketPrice}>{item.price.toLocaleString()} VND</Text>
+            </View>
+          )}
+          
+          {item.quantity !== undefined && item.quantity > 1 && (
+            <View style={styles.ticketInfo}>
+              <Ionicons name="layers-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+              <Text style={styles.infoText}>Quantity: {item.quantity}</Text>
+            </View>
+          )}
 
           <View style={styles.cardActions}>
             <Button
               mode="contained"
-              
+              onPress={() => handleViewDetails(item)}
+              style={styles.viewButton}
+              labelStyle={styles.buttonLabel}
+              icon="eye-outline"
             >
               View Details
             </Button>
@@ -102,15 +155,76 @@ const TicketsScreen = () => {
 
   return (
     <View style={styles.container}>
+      <Searchbar
+        placeholder="Search tickets"
+        onChangeText={onChangeSearch}
+        value={searchQuery}
+        style={styles.searchBar}
+        inputStyle={styles.searchInput}
+        iconColor={COLORS.primary}
+        placeholderTextColor={COLORS.textSecondary}
+      />
+      
+      <View style={styles.filterContainer}>
+        <Text style={styles.filterLabel}>Filter by:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer}>
+          <Chip 
+            selected={filterStatus === null} 
+            onPress={() => setFilterStatus(null)}
+            style={[styles.chip, filterStatus === null && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === null && styles.selectedChipText]}
+          >
+            All
+          </Chip>
+          <Chip 
+            selected={filterStatus === 'unused'} 
+            onPress={() => setFilterStatus('unused')}
+            style={[styles.chip, filterStatus === 'unused' && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === 'unused' && styles.selectedChipText]}
+          >
+            Not Used
+          </Chip>
+          <Chip 
+            selected={filterStatus === 'checked_in'} 
+            onPress={() => setFilterStatus('checked_in')}
+            style={[styles.chip, filterStatus === 'checked_in' && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === 'checked_in' && styles.selectedChipText]}
+          >
+            Checked In
+          </Chip>
+          <Chip 
+            selected={filterStatus === 'checked_out'} 
+            onPress={() => setFilterStatus('checked_out')}
+            style={[styles.chip, filterStatus === 'checked_out' && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === 'checked_out' && styles.selectedChipText]}
+          >
+            Checked Out
+          </Chip>
+        </ScrollView>
+      </View>
+      
       <FlatList
-        data={tickets}
+        data={filteredTickets}
         renderItem={renderTicketCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>{loading ? "Loading tickets..." : "No tickets found"}</Text>
+            {loading ? (
+              <>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.emptyText}>Loading tickets...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="ticket-outline" size={64} color={COLORS.textSecondary} />
+                <Text style={styles.emptyText}>No tickets found</Text>
+                <Text style={styles.emptySubtext}>
+                  {searchQuery || filterStatus ? 'Try changing your search or filter' : 'Purchase tickets to see them here'}
+                </Text>
+              </>
+            )}
           </View>
         }
       />
@@ -121,42 +235,98 @@ const TicketsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: COLORS.background,
     padding: 16,
+  },
+  searchBar: {
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: COLORS.card,
+    elevation: 0,
+  },
+  searchInput: {
+    color: COLORS.text,
+  },
+  filterContainer: {
+    marginBottom: 16,
+  },
+  filterLabel: {
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  chipContainer: {
+    paddingRight: 16,
+  },
+  chip: {
+    backgroundColor: COLORS.card,
+    marginRight: 8,
+  },
+  selectedChip: {
+    backgroundColor: COLORS.primary,
+  },
+  chipText: {
+    color: COLORS.textSecondary,
+  },
+  selectedChipText: {
+    color: COLORS.text,
   },
   listContainer: {
     paddingBottom: 20,
   },
   card: {
     marginBottom: 16,
-    elevation: 4,
+    elevation: 2,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   eventTitle: {
     fontSize: 18,
     fontWeight: "bold",
     flex: 1,
     marginRight: 8,
+    color: COLORS.text,
   },
   ticketInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  infoIcon: {
+    marginRight: 8,
+  },
+  infoText: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
+    color: COLORS.textSecondary,
   },
   ticketType: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
-    marginTop: 8,
+    color: COLORS.text,
+  },
+  ticketPrice: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: COLORS.primary,
   },
   cardActions: {
     marginTop: 16,
     flexDirection: "row",
     justifyContent: "flex-end",
+  },
+  viewButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+  },
+  buttonLabel: {
+    fontSize: 14,
+    fontWeight: "500",
   },
   emptyContainer: {
     flex: 1,
@@ -165,10 +335,17 @@ const styles = StyleSheet.create({
     paddingVertical: 50,
   },
   emptyText: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 18,
+    fontWeight: "500",
+    color: COLORS.textSecondary,
+    marginTop: 16,
   },
-})
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginTop: 8,
+    textAlign: "center",
+  },
+});
 
-export default TicketsScreen
-
+export default TicketsScreen;
