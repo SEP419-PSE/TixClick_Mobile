@@ -87,11 +87,8 @@ const LoginScreen = () => {
       if (response.success && response.data) {
         console.log("Login successful, saving token and role")
         
-        // Save token and role using the new auth context
         await login(response.data.accessToken, response.data.role)
         
-        // Navigate to home or main screen
-        // This depends on your navigation setup - adjust as needed
         navigation.reset({
           index: 0,
           routes: [{ name: "Home" as never }],
@@ -103,7 +100,6 @@ const LoginScreen = () => {
     } catch (error: any) {
       console.log("Login failed:", error.message)
 
-      // Kiểm tra các loại lỗi
       if (error.message.includes("Không thể kết nối") || error.message.includes("hết thời gian chờ")) {
         Alert.alert("Lỗi kết nối", error.message, [
           {

@@ -1,13 +1,13 @@
+import { Ionicons } from "@expo/vector-icons"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
-import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../context/AuthContext"
 import LoginScreen from "../screens/Auth/LoginScreen"
 import RegisterScreen from "../screens/Auth/RegisterScreen"
 import HomeScreen from "../screens/Home/HomeScreen"
+import ProfileScreen from "../screens/Profile/ProfileScreen"
 import TicketDetailsScreen from "../screens/Ticket/TicketDetailsScreen"
 import TicketsScreen from "../screens/Ticket/TicketsScreen"
-import { useEffect } from "react"
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -33,20 +33,20 @@ const TicketsStack = () => {
 const MainTabs = () => {
   return (
     <Tab.Navigator
-      initialRouteName="Tickets" // Start with Tickets tab
+      initialRouteName="Tickets" 
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName
+          let iconName;
 
           if (route.name === "Home") {
-            iconName = focused ? "home" : "home-outline"
+            iconName = focused ? "home" : "home-outline";
           } else if (route.name === "Tickets") {
-            iconName = focused ? "ticket" : "ticket-outline"
+            iconName = focused ? "ticket" : "ticket-outline";
           } else if (route.name === "Profile") {
-            iconName = focused ? "person" : "person-outline"
+            iconName = focused ? "person" : "person-outline";
           }
 
-          return <Ionicons name={iconName as any} size={size} color={color} />
+          return <Ionicons name={iconName as any} size={size} color={color} />;
         },
         tabBarActiveTintColor: "#FF8C00",
         tabBarInactiveTintColor: "gray",
@@ -58,9 +58,10 @@ const MainTabs = () => {
     >
       <Tab.Screen name="Tickets" component={TicketsStack} options={{ headerShown: false }} />
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
-  )
-}
+  );
+};
 
 const AppNavigator = () => {
   const { isLoggedIn } = useAuth()
