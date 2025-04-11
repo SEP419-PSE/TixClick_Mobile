@@ -1,19 +1,20 @@
 export const COLORS = {
-    primary: "#FF8C00", // Cam
-    background: "#121212", // Đen nền
-    card: "#1E1E1E", // Đen nhạt hơn cho card
-    input: "#2A2A2A", // Đen nhạt hơn cho input
-    text: {
-      primary: "#FFFFFF", // Trắng cho text chính
-      secondary: "#9E9E9E", // Xám cho text phụ
-      placeholder: "#6c757d", // Xám nhạt cho placeholder
-    },
-    border: "#333333", // Viền
-    success: "#4CAF50", // Xanh lá
-    error: "#F44336", // Đỏ
-    warning: "#FFC107", // Vàng
-    info: "#2196F3", // Xanh dương
-  }
+  primary: '#FF8C00', // Orange
+  primaryDark: '#E67E00',
+  secondary: '#2196F3', // Blue
+  background: '#121212', // Dark background
+  card: '#1E1E1E', // Slightly lighter background for cards
+  text: '#FFFFFF',
+  textSecondary: '#AAAAAA',
+  border: '#333333',
+  error: '#FF5252',
+  success: '#4CAF50',
+  warning: '#FFC107',
+  inactive: '#757575',
+  statusUnused: '#2196F3', // Blue
+  statusCheckedIn: '#4CAF50', // Green
+  statusCheckedOut: '#9E9E9E', // Grey
+};
   
   export const FONTS = {
     regular: {

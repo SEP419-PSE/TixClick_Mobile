@@ -1,6 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { createContext, useContext, useEffect, useState } from "react"
-import { checkApiConnection } from "../lib/api"
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createContext, useContext, useEffect, useState } from "react";
+import { checkApiConnection } from "../lib/api";
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -10,6 +10,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   isLoading: boolean;
   checkConnection: () => Promise<boolean>;
+  clearAllTokens: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   isLoading: true,
   checkConnection: async () => false,
+  clearAllTokens: async () => {},
 })
 
 export const useAuth = () => useContext(AuthContext)
@@ -34,9 +36,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadStoredData = async () => {
       try {
         console.log('Loading stored authentication data')
+        
+        // FORCE CLEAR ALL TOKENS ON APP START
+        await AsyncStorage.removeItem("token")
+        await AsyncStorage.removeItem("role")
+        await AsyncStorage.removeItem("refreshToken")
+        console.log('FORCED CLEARING OF ALL TOKENS ON APP START')
+        
+        // Now continue with normal flow, which should find no tokens
         const storedToken = await AsyncStorage.getItem("token")
         const storedRole = await AsyncStorage.getItem("role")
-
+  
         if (storedToken && storedRole) {
           console.log('Stored token and role found')
           setToken(storedToken)
@@ -44,6 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoggedIn(true)
         } else {
           console.log('No stored authentication data found')
+          setToken(null)
+          setRole(null)
           setIsLoggedIn(false)
         }
       } catch (error) {
@@ -53,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false)
       }
     }
-
+  
     loadStoredData()
   }, [])
 
@@ -100,6 +112,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const clearAllTokens = async () => {
+    try {
+      console.log('Clearing all stored tokens')
+      await AsyncStorage.removeItem("token")
+      await AsyncStorage.removeItem("role")
+      await AsyncStorage.removeItem("refreshToken")
+      console.log('All tokens cleared')
+      
+      setToken(null)
+      setRole(null)
+      setIsLoggedIn(false)
+    } catch (error) {
+      console.error('Error clearing tokens:', error)
+    }
+  }
+
   return (
     <AuthContext.Provider value={{ 
       isLoggedIn, 
@@ -108,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       logout, 
       isLoading,
-      checkConnection 
+      checkConnection,
+      clearAllTokens 
     }}>
       {children}
     </AuthContext.Provider>
