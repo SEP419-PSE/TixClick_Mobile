@@ -33,7 +33,7 @@ const TicketsStack = () => {
 const MainTabs = () => {
   return (
     <Tab.Navigator
-      initialRouteName="Tickets" // Start with Tickets tab
+      initialRouteName="Tickets" 
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
