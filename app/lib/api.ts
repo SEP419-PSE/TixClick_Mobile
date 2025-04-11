@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ticket } from "../screens/Ticket/TicketsScreen";
 
-const API_BASE_URL = "https://160.191.175.172:8443"
+const API_BASE_URL = "https://160.191.175.172:8443/api"
 
 interface ApiResponse<T = any> {
   success: boolean;
