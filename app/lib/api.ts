@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ticket } from "../screens/Ticket/TicketsScreen";
 
-const API_BASE_URL = "https://160.191.175.172:8443/api"
+const API_BASE_URL = "https://tixclick.site/api"
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -85,6 +85,7 @@ export const loginUser = async (userName: string, password: string): Promise<Api
     throw new Error('Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng');
   }
 };
+
 
 
 export const fetchUserTickets = async (token: string): Promise<Ticket[]> => {
