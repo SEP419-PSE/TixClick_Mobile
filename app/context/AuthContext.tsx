@@ -8,6 +8,7 @@ type AuthContextType = {
   login: (token: string, role: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
+  // checkConnection: () => Promise<boolean>;
   clearAllTokens: () => Promise<void>;
 }
 
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   isLoading: true,
+  // checkConnection: async () => false,
   clearAllTokens: async () => {},
 })
 
@@ -66,7 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStoredData()
   }, [])
 
-
+  // const checkConnection = async (): Promise<boolean> => {
+  //   try {
+  //     await checkApiConnection()
+  //     return true
+  //   } catch (error) {
+  //     console.error("API connection check failed:", error)
+  //     return false
+  //   }
+  // }
 
   const login = async (newToken: string, userRole: string) => {
     try {
@@ -125,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       logout, 
       isLoading,
+      // checkConnection,
       clearAllTokens 
     }}>
       {children}

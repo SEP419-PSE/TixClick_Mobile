@@ -27,81 +27,82 @@ const LoginScreen = () => {
   const navigation = useNavigation()
 
   // Load saved username if remember me was checked
-  useState(() => {
-    const loadSavedUsername = async () => {
-      try {
-        const savedUsername = await AsyncStorage.getItem("savedUsername")
-        const savedRememberMe = await AsyncStorage.getItem("rememberMe")
+  // useState(() => {
+  //   const loadSavedUsername = async () => {
+  //     try {
+  //       const savedUsername = await AsyncStorage.getItem("savedUsername")
+  //       const savedRememberMe = await AsyncStorage.getItem("rememberMe")
         
-        if (savedUsername && savedRememberMe === "true") {
-          setUsername(savedUsername)
-          setRememberMe(true)
-        }
-      } catch (error) {
-        console.log("Error loading saved username:", error)
-      }
-    }
+  //       if (savedUsername && savedRememberMe === "true") {
+  //         setUsername(savedUsername)
+  //         setRememberMe(true)
+  //       }
+  //     } catch (error) {
+  //       console.log("Error loading saved username:", error)
+  //     }
+  //   }
     
-    loadSavedUsername()
-  })
-
+  //   loadSavedUsername()
+  // })
   const handleLogin = async () => {
     if (!username || !password) {
-      console.log("Login validation failed: missing fields")
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin")
-      return
+      console.log("Login validation failed: missing fields");
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
+      return;
     }
-
-    // try {
-      console.log("Attempting login with username:", username)
-      setIsSubmitting(true)
-      
-      // Save username if remember me is checked
-      if (rememberMe) {
-        await AsyncStorage.setItem("savedUsername", username)
-        await AsyncStorage.setItem("rememberMe", "true")
-      } else {
-        await AsyncStorage.removeItem("savedUsername")
-        await AsyncStorage.removeItem("rememberMe")
-      }
-      
-      // Call the updated login API
-      const response = await loginUser(username, password)
-      
+  
+    try {
+      console.log("Attempting login with username:", username);
+      setIsSubmitting(true);
+  
+      // Optionally save the username if rememberMe is checked
+      // if (rememberMe) {
+      //   await AsyncStorage.setItem("savedUsername", username);
+      //   await AsyncStorage.setItem("rememberMe", "true");
+      // } else {
+      //   await AsyncStorage.removeItem("savedUsername");
+      //   await AsyncStorage.removeItem("rememberMe");
+      // }
+  
+      // Call the login API (use the correct API function, in this case, `loginUser`)
+      const response = await loginUser(username, password);
+  
+      // Check if the login was successful and if there's data to store
       if (response.success && response.data) {
-        console.log("Login successful, saving token and role")
-        
-        await login(response.data.accessToken, response.data.role)
-        
+        console.log("Login successful, saving token and role");
+  
+        // Save the access token and role in AsyncStorage
+        await AsyncStorage.setItem('accessToken', response.data.accessToken);
+        await AsyncStorage.setItem('role', response.data.role);
+  
+        // Optionally save the username if rememberMe is checked
+        if (rememberMe) {
+          await AsyncStorage.setItem("savedUsername", username);
+          await AsyncStorage.setItem("rememberMe", "true");
+        } else {
+          await AsyncStorage.removeItem("savedUsername");
+          await AsyncStorage.removeItem("rememberMe");
+        }
+  
+        // Reset the navigation stack to the Home screen
         navigation.reset({
           index: 0,
           routes: [{ name: "Home" as never }],
-        })
+        });
       } else {
-        Alert.alert("Đăng nhập thất bại", response.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
+        // If login failed, show an alert
+        Alert.alert("Đăng nhập thất bại", response.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại");
       }
-      
-    // } catch (error: any) {
-    //   console.log("Login failed:", error.message)
-
-      // if (error.message.includes("Không thể kết nối") || error.message.includes("hết thời gian chờ")) {
-      //   Alert.alert("Lỗi kết nối", error.message, [
-      //     {
-      //       text: "Kiểm tra kết nối",
-      //       onPress: () => {
-      //         console.log("Navigating to API test screen")
-      //         navigation.navigate("ApiTest" as never)
-      //       },
-      //     },
-      //     { text: "OK" },
-      //   ])
-      // } else {
-      //   Alert.alert("Đăng nhập thất bại", error.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
-      // }
-  //   } finally {
-  //     setIsSubmitting(false)
-  //   }
-  }
+    } catch (error: any) {
+      console.log("Login failed:", error.message);
+      // Show an alert with the error message
+      Alert.alert("Lỗi", error.message || "Đã xảy ra lỗi trong quá trình đăng nhập");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  
 
   return (
     <View style={styles.container}>
