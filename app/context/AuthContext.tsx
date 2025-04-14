@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
-import { checkApiConnection } from "../lib/api";
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -87,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setToken(newToken)
       setRole(userRole)
-      setIsLoggedIn(true)
+      // setIsLoggedIn(true)
       
       console.log("Login successful")
       console.log("Token:", newToken)

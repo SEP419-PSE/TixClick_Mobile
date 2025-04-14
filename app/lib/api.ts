@@ -51,13 +51,17 @@ export const loginUser = async (userName: string, password: string): Promise<Api
     console.log("Calling loginUser API with username:", userName);
     
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      mode: 'cors',
       body: JSON.stringify({ userName, password }), 
     });
+    console.log("url:", `${API_BASE_URL}/auth/login`),
 
+    console.log("request body:", response);
     const data = await response.json();
     console.log("Login API response:", data);
 
@@ -129,20 +133,3 @@ export const fetchUserTickets = async (token: string): Promise<Ticket[]> => {
 };
 
 
-export const checkApiConnection = async (): Promise<ApiResponse> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
-      method: "GET",
-      signal: AbortSignal.timeout(5000),
-    });
-    
-    const data = await response.json();
-    return {
-      success: response.ok,
-      message: data.message || 'Connection successful',
-    };
-  } catch (error) {
-    console.error("API connection check failed:", error);
-    throw new Error('Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng');
-  }
-};

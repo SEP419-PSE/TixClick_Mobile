@@ -1,5 +1,8 @@
 import { useAuth } from "@/app/context/AuthContext";
+import { loginUser } from "@/app/lib/api";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import {
   Alert,
@@ -13,9 +16,6 @@ import {
   View
 } from "react-native";
 import { Button, Checkbox, TextInput } from "react-native-paper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { loginUser } from "@/app/lib/api";
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("")
