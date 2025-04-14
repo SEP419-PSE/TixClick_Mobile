@@ -1,5 +1,8 @@
 import { useAuth } from "@/app/context/AuthContext";
+import { loginUser } from "@/app/lib/api";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import {
   Alert,
@@ -13,9 +16,6 @@ import {
   View
 } from "react-native";
 import { Button, Checkbox, TextInput } from "react-native-paper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { loginUser } from "@/app/lib/api";
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("")
@@ -23,7 +23,7 @@ const LoginScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
-  const { login, checkConnection } = useAuth()
+  const { login } = useAuth()
   const navigation = useNavigation()
 
   // Load saved username if remember me was checked
@@ -52,25 +52,9 @@ const LoginScreen = () => {
       return
     }
 
-    try {
+    // try {
       console.log("Attempting login with username:", username)
       setIsSubmitting(true)
-      
-      // Check connection first
-      const isConnected = await checkConnection()
-      if (!isConnected) {
-        Alert.alert("Lỗi kết nối", "Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng", [
-          {
-            text: "Kiểm tra kết nối",
-            onPress: () => {
-              console.log("Navigating to API test screen")
-              navigation.navigate("ApiTest" as never)
-            },
-          },
-          { text: "OK" },
-        ])
-        return
-      }
       
       // Save username if remember me is checked
       if (rememberMe) {
@@ -97,26 +81,26 @@ const LoginScreen = () => {
         Alert.alert("Đăng nhập thất bại", response.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
       }
       
-    } catch (error: any) {
-      console.log("Login failed:", error.message)
+    // } catch (error: any) {
+    //   console.log("Login failed:", error.message)
 
-      if (error.message.includes("Không thể kết nối") || error.message.includes("hết thời gian chờ")) {
-        Alert.alert("Lỗi kết nối", error.message, [
-          {
-            text: "Kiểm tra kết nối",
-            onPress: () => {
-              console.log("Navigating to API test screen")
-              navigation.navigate("ApiTest" as never)
-            },
-          },
-          { text: "OK" },
-        ])
-      } else {
-        Alert.alert("Đăng nhập thất bại", error.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
+      // if (error.message.includes("Không thể kết nối") || error.message.includes("hết thời gian chờ")) {
+      //   Alert.alert("Lỗi kết nối", error.message, [
+      //     {
+      //       text: "Kiểm tra kết nối",
+      //       onPress: () => {
+      //         console.log("Navigating to API test screen")
+      //         navigation.navigate("ApiTest" as never)
+      //       },
+      //     },
+      //     { text: "OK" },
+      //   ])
+      // } else {
+      //   Alert.alert("Đăng nhập thất bại", error.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại")
+      // }
+  //   } finally {
+  //     setIsSubmitting(false)
+  //   }
   }
 
   return (

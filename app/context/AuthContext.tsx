@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
-import { checkApiConnection } from "../lib/api";
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -9,7 +8,6 @@ type AuthContextType = {
   login: (token: string, role: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  checkConnection: () => Promise<boolean>;
   clearAllTokens: () => Promise<void>;
 }
 
@@ -20,7 +18,6 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   isLoading: true,
-  checkConnection: async () => false,
   clearAllTokens: async () => {},
 })
 
@@ -69,15 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStoredData()
   }, [])
 
-  const checkConnection = async (): Promise<boolean> => {
-    try {
-      await checkApiConnection()
-      return true
-    } catch (error) {
-      console.error("API connection check failed:", error)
-      return false
-    }
-  }
+
 
   const login = async (newToken: string, userRole: string) => {
     try {
@@ -87,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setToken(newToken)
       setRole(userRole)
-      setIsLoggedIn(true)
+      // setIsLoggedIn(true)
       
       console.log("Login successful")
       console.log("Token:", newToken)
@@ -136,7 +125,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       logout, 
       isLoading,
-      checkConnection,
       clearAllTokens 
     }}>
       {children}
