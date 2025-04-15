@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Share } from 'react-native';
-import { Button, Card, Divider } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
-import { useRoute, RouteProp } from '@react-navigation/native';
-import QRCode from 'react-native-qrcode-svg';
 import { COLORS } from '@/app/utils/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Modal, Pressable, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Card, Divider } from 'react-native-paper';
+import QRCode from 'react-native-qrcode-svg';
 
 type Ticket = {
   id: string
@@ -30,27 +30,19 @@ const TicketDetailsScreen = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "unused":
-        return COLORS.statusUnused;
-      case "checked_in":
-        return COLORS.statusCheckedIn;
-      case "checked_out":
-        return COLORS.statusCheckedOut;
-      default:
-        return COLORS.statusUnused;
+      case "unused": return COLORS.statusUnused;
+      case "checked_in": return COLORS.statusCheckedIn;
+      case "checked_out": return COLORS.statusCheckedOut;
+      default: return COLORS.statusUnused;
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "unused":
-        return "Not Used";
-      case "checked_in":
-        return "Checked In";
-      case "checked_out":
-        return "Checked Out";
-      default:
-        return status;
+      case "unused": return "Not Used";
+      case "checked_in": return "Checked In";
+      case "checked_out": return "Checked Out";
+      default: return status;
     }
   };
 
@@ -67,112 +59,95 @@ const TicketDetailsScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Image 
-        source={{ uri: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80' }} 
-        style={styles.banner}
-      />
-      
       <View style={[styles.statusContainer, { backgroundColor: getStatusColor(ticket.status) }]}>
         <Text style={styles.statusText}>{getStatusText(ticket.status)}</Text>
       </View>
-      
+
       <Card style={styles.card}>
         <Card.Content>
           <Text style={styles.eventTitle}>{ticket.eventTitle}</Text>
-          
+
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
             <Text style={styles.detailText}>{ticket.eventDate}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
             <Text style={styles.detailText}>{ticket.eventLocation}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Ionicons name="ticket-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
             <Text style={styles.detailText}>{ticket.ticketType}</Text>
           </View>
-          
+
           {ticket.price !== undefined && (
             <View style={styles.detailRow}>
               <Ionicons name="pricetag-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
               <Text style={styles.priceText}>{ticket.price.toLocaleString()} VND</Text>
             </View>
           )}
-          
+
           {ticket.quantity !== undefined && ticket.quantity > 1 && (
             <View style={styles.detailRow}>
               <Ionicons name="layers-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
               <Text style={styles.detailText}>Quantity: {ticket.quantity}</Text>
             </View>
           )}
-          
+
           <Divider style={styles.divider} />
-          
+
           <Text style={styles.sectionTitle}>Ticket ID</Text>
           <Text style={styles.ticketId}>{ticket.id}</Text>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.qrContainer}
-            onPress={() => setShowQR(!showQR)}
+            onPress={() => setShowQR(true)}
             activeOpacity={0.8}
           >
-            {showQR ? (
-              <View style={styles.qrCodeContainer}>
-                <QRCode
-                  value={ticket.qrCode || ticket.id}
-                  size={200}
-                  color="black"
-                  backgroundColor="white"
-                />
-                <Text style={styles.qrHint}>Tap to hide QR code</Text>
-              </View>
-            ) : (
-              <View style={styles.showQrButton}>
-                <Ionicons name="qr-code-outline" size={24} color={COLORS.text} />
-                <Text style={styles.showQrText}>Show QR Code</Text>
-              </View>
-            )}
+            <View style={styles.showQrButton}>
+              <Ionicons name="qr-code-outline" size={24} color={COLORS.text} />
+              <Text style={styles.showQrText}>Show QR Code</Text>
+            </View>
           </TouchableOpacity>
         </Card.Content>
       </Card>
-      
+
       <View style={styles.actionButtons}>
-        <Button 
-          mode="contained" 
-          icon="share-variant" 
+        <Button
+          mode="contained"
+          icon="share-variant"
           onPress={handleShareTicket}
           style={styles.shareButton}
           labelStyle={styles.buttonLabel}
         >
           Share Ticket
         </Button>
-        
-        <Button 
-          mode="outlined" 
-          icon="download" 
+
+        <Button
+          mode="outlined"
+          icon="download"
           style={styles.downloadButton}
           labelStyle={[styles.buttonLabel, { color: COLORS.primary }]}
         >
           Download
         </Button>
       </View>
-      
+
       <Card style={styles.infoCard}>
         <Card.Content>
           <Text style={styles.infoTitle}>Important Information</Text>
           <Text style={styles.infoText}>
             Please arrive at least 30 minutes before the event starts. Have your QR code ready for scanning at the entrance.
           </Text>
-          
+
           <Divider style={styles.divider} />
-          
+
           <Text style={styles.infoTitle}>Need Help?</Text>
-          <Button 
-            mode="text" 
-            icon="headphones" 
+          <Button
+            mode="text"
+            icon="headphones"
             style={styles.helpButton}
             labelStyle={{ color: COLORS.primary }}
           >
@@ -180,6 +155,28 @@ const TicketDetailsScreen = () => {
           </Button>
         </Card.Content>
       </Card>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQR}
+        transparent
+        animationType="fade"
+      >
+        <Pressable
+          style={styles.modalBackground}
+          onPress={() => setShowQR(false)}
+        >
+          <View style={styles.modalQRContainer}>
+            <QRCode
+              value={ticket.qrCode || ticket.id}
+              size={300}
+              color="black"
+              backgroundColor="white"
+            />
+            <Text style={styles.qrHint}>Tap anywhere to close</Text>
+          </View>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 };
@@ -188,11 +185,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  banner: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
   },
   statusContainer: {
     paddingVertical: 8,
@@ -254,17 +246,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qrCodeContainer: {
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  qrHint: {
-    marginTop: 8,
-    color: COLORS.textSecondary,
-    fontSize: 12,
-  },
   showQrButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -278,6 +259,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontWeight: '500',
     marginLeft: 8,
+  },
+  qrHint: {
+    marginTop: 8,
+    color: COLORS.textSecondary,
+    fontSize: 12,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -320,6 +306,18 @@ const styles = StyleSheet.create({
   helpButton: {
     alignSelf: 'flex-start',
     marginTop: 8,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalQRContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
   },
 });
 

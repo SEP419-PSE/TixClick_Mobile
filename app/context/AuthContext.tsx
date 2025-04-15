@@ -9,6 +9,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   isLoading: boolean;
   clearAllTokens: () => Promise<void>;
+  register: (username: string, email: string, password: string, firstName: string, lastName: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   isLoading: true,
   clearAllTokens: async () => {},
+  register: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -75,6 +77,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const register = async (username: string, email: string, password: string, firstName: string, lastName: string) => {
+    try {
+      console.log("Registering user...");
+  
+      // Giả lập API call
+      const response = await fetch("https://tixclick.site/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password, firstName, lastName }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+  
+      const data = await response.json();  // server trả về { token, role }
+      console.log("Registration successful:", data);
+  
+      await login(data.token, data.role);  // đăng nhập luôn sau khi đăng ký
+    } catch (error) {
+      console.error("Registration error:", error);
+      throw error;
+    }
+  };
+  
+  
+
   const logout = async () => {
     try {
       console.log("Logging out...");
@@ -118,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         isLoading,
         clearAllTokens,
+        register, 
       }}
     >
       {children}

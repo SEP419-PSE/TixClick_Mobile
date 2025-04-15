@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Card, Divider } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 
@@ -48,6 +48,7 @@ const ProfileScreen = () => {
   };
 
   return (
+    <ScrollView>
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
@@ -130,6 +131,7 @@ const ProfileScreen = () => {
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </View>
+    </ScrollView>
   );
 };
 
