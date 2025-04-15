@@ -3,10 +3,10 @@ import { useNavigation } from "@react-navigation/native"
 import { useEffect, useState } from "react"
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { ActivityIndicator, Badge, Button, Card, Chip, Searchbar } from "react-native-paper"
-import { fetchUserTickets } from "../../lib/api" // Update this path to your actual API file
+import { fetchUserTickets } from "../../lib/api" 
+import { COLORS } from "@/app/utils/theme"
 import { Ionicons } from "@expo/vector-icons"
 import { ScrollView } from "react-native-gesture-handler"
-import { COLORS } from "@/app/utils/theme"
 
 
 export interface Ticket {
@@ -39,6 +39,7 @@ const TicketsScreen = () => {
     try {
       setLoading(true)
       const data = await fetchUserTickets(token || "")
+      console.log("Tickets data:", data)
       setTickets(data)
     } catch (error) {
       console.error("Error loading tickets:", error)
