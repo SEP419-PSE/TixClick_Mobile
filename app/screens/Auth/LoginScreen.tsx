@@ -26,24 +26,6 @@ const LoginScreen = () => {
   const { login } = useAuth()
   const navigation = useNavigation()
 
-  // Load saved username if remember me was checked
-  // useState(() => {
-  //   const loadSavedUsername = async () => {
-  //     try {
-  //       const savedUsername = await AsyncStorage.getItem("savedUsername")
-  //       const savedRememberMe = await AsyncStorage.getItem("rememberMe")
-        
-  //       if (savedUsername && savedRememberMe === "true") {
-  //         setUsername(savedUsername)
-  //         setRememberMe(true)
-  //       }
-  //     } catch (error) {
-  //       console.log("Error loading saved username:", error)
-  //     }
-  //   }
-    
-  //   loadSavedUsername()
-  // })
   const handleLogin = async () => {
     if (!username || !password) {
       console.log("Login validation failed: missing fields");
@@ -55,27 +37,14 @@ const LoginScreen = () => {
       console.log("Attempting login with username:", username);
       setIsSubmitting(true);
   
-      // Optionally save the username if rememberMe is checked
-      // if (rememberMe) {
-      //   await AsyncStorage.setItem("savedUsername", username);
-      //   await AsyncStorage.setItem("rememberMe", "true");
-      // } else {
-      //   await AsyncStorage.removeItem("savedUsername");
-      //   await AsyncStorage.removeItem("rememberMe");
-      // }
-  
-      // Call the login API (use the correct API function, in this case, `loginUser`)
       const response = await loginUser(username, password);
   
-      // Check if the login was successful and if there's data to store
       if (response.success && response.data) {
         console.log("Login successful, saving token and role");
   
-        // Save the access token and role in AsyncStorage
         await AsyncStorage.setItem('accessToken', response.data.accessToken);
         await AsyncStorage.setItem('role', response.data.role);
   
-        // Optionally save the username if rememberMe is checked
         if (rememberMe) {
           await AsyncStorage.setItem("savedUsername", username);
           await AsyncStorage.setItem("rememberMe", "true");
@@ -84,18 +53,16 @@ const LoginScreen = () => {
           await AsyncStorage.removeItem("rememberMe");
         }
   
-        // Reset the navigation stack to the Home screen
+        await login(response.data.accessToken, response.data.role);
+      
         navigation.reset({
-          index: 0,
-          routes: [{ name: "Home" as never }],
+          routes: [{ name: "Main" as never }],
         });
       } else {
-        // If login failed, show an alert
         Alert.alert("Đăng nhập thất bại", response.message || "Vui lòng kiểm tra thông tin đăng nhập và thử lại");
       }
     } catch (error: any) {
       console.log("Login failed:", error.message);
-      // Show an alert with the error message
       Alert.alert("Lỗi", error.message || "Đã xảy ra lỗi trong quá trình đăng nhập");
     } finally {
       setIsSubmitting(false);
@@ -105,6 +72,7 @@ const LoginScreen = () => {
   
 
   return (
+    
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
