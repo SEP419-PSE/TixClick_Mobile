@@ -90,10 +90,17 @@ export const loginUser = async (userName: string, password: string): Promise<Api
   }
 };
 
-
-export const fetchUserTickets = async (token: string, page = 1, sortDirection = "5"): Promise<Ticket[]> => {
+export const fetchUserTickets = async (token: string, page = 1, sortDirection = "5"): Promise<{
+  tickets: Ticket[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    pageSize: number;
+  };
+}> => {
   try {
-    console.log("Fetching user tickets")
+    console.log(`Fetching user tickets - page: ${page}, sortDirection: ${sortDirection}`);
 
     const response = await fetch(
       `${API_BASE_URL}/ticket-purchase/all_of_account?page=${page}&sortDirection=${sortDirection}`,
@@ -105,33 +112,57 @@ export const fetchUserTickets = async (token: string, page = 1, sortDirection = 
           accept: "*/*",
         },
       },
-    )
+    );
 
-    const data = await response.json()
-    console.log("Tickets API response:", data)
+    const data = await response.json();
+    console.log("Tickets API response:", data);
 
     if (data.code === 0 || data.code === 200) {
-      return data.result.map((item: any) => ({
-        id: item.seatCode || String(Math.random()),
-        eventId: String(item.eventId),
-        eventTitle: item.eventName,
-        eventDate:
-          item.eventDate + (item.eventStartTime ? ` ${item.eventStartTime.hour}:${item.eventStartTime.minute}` : ""),
-        eventLocation: item.location,
-        ticketType: `${item.ticketType}${item.zoneName ? ` - ${item.zoneName}` : ""}`,
-        status: "unused",
-        qrCode: item.qrCode,
+      // Map the items array from the result
+      const tickets = data.result.items.map((item: any) => ({
+        eventId: item.eventId,
+        eventActivityId: item.eventActivityId,
+        ticketPurchaseId: item.ticketPurchaseId,
+        eventCategoryId: item.eventCategoryId,
+        eventName: item.eventName,
+        eventDate: item.eventDate,
+        eventStartTime: item.eventStartTime,
+        timeBuyTicket: item.timeBuyTicket,
+        locationName: item.locationName,
+        location: item.location,
         price: item.price,
+        seatCode: item.seatCode,
+        ticketType: item.ticketType,
+        qrCode: item.qrCode,
+        zoneName: item.zoneName,
         quantity: item.quantity,
-      }))
+        ishaveSeatmap: item.ishaveSeatmap,
+        logo: item.logo,
+        banner: item.banner,
+        // Add an id field for FlatList keyExtractor
+        id: item.seatCode || String(Math.random()),
+        // Add a status field (you may need to adjust this based on your actual data)
+        status: "unused", // Default status, adjust as needed
+      }));
+
+      // Return both the tickets and pagination info
+      return {
+        tickets,
+        pagination: {
+          currentPage: data.result.currentPage,
+          totalPages: data.result.totalPages,
+          totalElements: data.result.totalElements,
+          pageSize: data.result.pageSize,
+        },
+      };
     } else {
-      console.error("Failed to fetch tickets:", data.message)
-      return []
+      console.error("Failed to fetch tickets:", data.message);
+      return { tickets: [], pagination: { currentPage: 1, totalPages: 1, totalElements: 0, pageSize: 0 } };
     }
   } catch (error) {
-    console.error("Tickets API error:", error)
-    throw new Error("Could not connect to server, please check your network connection")
+    console.error("Tickets API error:", error);
+    throw new Error("Could not connect to server, please check your network connection");
   }
-}
+};
 
 

@@ -39,7 +39,7 @@ const TicketDetailsScreen = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "unused": return "Not Used";
+      case "unused": return "Chưa sử dụng";
       case "checked_in": return "Checked In";
       case "checked_out": return "Checked Out";
       default: return status;
@@ -92,13 +92,13 @@ const TicketDetailsScreen = () => {
           {ticket.quantity !== undefined && ticket.quantity > 1 && (
             <View style={styles.detailRow}>
               <Ionicons name="layers-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
-              <Text style={styles.detailText}>Quantity: {ticket.quantity}</Text>
+              <Text style={styles.detailText}>Số lượng: {ticket.quantity}</Text>
             </View>
           )}
 
           <Divider style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Ticket ID</Text>
+          <Text style={styles.sectionTitle}>Vé :</Text>
           <Text style={styles.ticketId}>{ticket.id}</Text>
 
           <TouchableOpacity
@@ -108,7 +108,7 @@ const TicketDetailsScreen = () => {
           >
             <View style={styles.showQrButton}>
               <Ionicons name="qr-code-outline" size={24} color={COLORS.text} />
-              <Text style={styles.showQrText}>Show QR Code</Text>
+              <Text style={styles.showQrText}>Hiển thị mã QR</Text>
             </View>
           </TouchableOpacity>
         </Card.Content>
@@ -122,7 +122,7 @@ const TicketDetailsScreen = () => {
           style={styles.shareButton}
           labelStyle={styles.buttonLabel}
         >
-          Share Ticket
+          Chia sẻ vé
         </Button>
 
         <Button
@@ -131,20 +131,20 @@ const TicketDetailsScreen = () => {
           style={styles.downloadButton}
           labelStyle={[styles.buttonLabel, { color: COLORS.primary }]}
         >
-          Download
+          Tải về
         </Button>
       </View>
 
       <Card style={styles.infoCard}>
         <Card.Content>
-          <Text style={styles.infoTitle}>Important Information</Text>
+          <Text style={styles.infoTitle}>Thông tin lưu ý</Text>
           <Text style={styles.infoText}>
-            Please arrive at least 30 minutes before the event starts. Have your QR code ready for scanning at the entrance.
+            Vui lòng kiểm tra kỹ thông tin vé trước khi đến sự kiện. Nếu có bất kỳ vấn đề gì, vui lòng liên hệ với chúng tôi qua số điện thoại hoặc email bên dưới.
           </Text>
 
           <Divider style={styles.divider} />
 
-          <Text style={styles.infoTitle}>Need Help?</Text>
+          <Text style={styles.infoTitle}>Cần giúp đỡ?</Text>
           <Button
             mode="text"
             icon="headphones"

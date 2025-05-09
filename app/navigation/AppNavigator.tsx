@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
+import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/Auth/LoginScreen";
 import RegisterScreen from "../screens/Auth/RegisterScreen";
@@ -8,7 +9,6 @@ import HomeScreen from "../screens/Home/HomeScreen";
 import ProfileScreen from "../screens/Profile/ProfileScreen";
 import TicketDetailsScreen from "../screens/Ticket/TicketDetailsScreen";
 import TicketsScreen from "../screens/Ticket/TicketsScreen";
-import { ActivityIndicator, View } from "react-native";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -22,23 +22,23 @@ const AuthStack = () => (
 
 const TicketsStack = () => (
   <Stack.Navigator>
-    <Stack.Screen name="MyTickets" component={TicketsScreen} options={{ title: "My Tickets" }} />
-    <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} options={{ title: "Ticket Details" }} />
+    <Stack.Screen name="MyTickets" component={TicketsScreen} options={{ title: "Vé của tôi" }} />
+    <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} options={{ title: "Chi tiết vé" }} />
   </Stack.Navigator>
 );
 
 const MainTabs = () => (
   <Tab.Navigator
-    initialRouteName="Tickets"
+    initialRouteName="Vé của tôi"
     screenOptions={({ route }) => ({
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
 
-        if (route.name === "Home") {
+        if (route.name === "Trang chủ") {
           iconName = focused ? "home" : "home-outline";
-        } else if (route.name === "Tickets") {
+        } else if (route.name === "Vé của tôi") {
           iconName = focused ? "ticket" : "ticket-outline";
-        } else if (route.name === "Profile") {
+        } else if (route.name === "Cá nhân") {
           iconName = focused ? "person" : "person-outline";
         }
 
@@ -52,9 +52,9 @@ const MainTabs = () => (
       },
     })}
   >
-    <Tab.Screen name="Tickets" component={TicketsStack} options={{ headerShown: false }} />
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Screen name="Vé của tôi" component={TicketsStack} options={{ headerShown: false }} />
+    <Tab.Screen name="Trang chủ" component={HomeScreen} />
+    <Tab.Screen name="Cá nhân" component={ProfileScreen} />
   </Tab.Navigator>
 );
 

@@ -8,52 +8,29 @@ import { ScrollView } from "react-native-gesture-handler"
 import { ActivityIndicator, Badge, Button, Card, Chip, Searchbar } from "react-native-paper"
 import { fetchUserTickets } from "../../lib/api"
 
+// Define the Ticket interface
 export interface Ticket {
-  id: string
-  eventId: string
-  eventTitle: string
-  eventDate: string
-  eventLocation: string
-  ticketType: string
-  status: "unused" | "checked_in" | "checked_out"
-  qrCode: string
-  price?: number
-  quantity?: number
-}
-
-// Define the API response structure based on the exact JSON provided
-interface TicketApiItem {
-  eventId: number
-  eventActivityId: number
-  ticketPurchaseId: number
-  eventCategoryId: number
-  eventName: string
-  eventDate: string
-  eventStartTime: string
-  timeBuyTicket: string
-  locationName: string
-  location: string
-  price: number
-  seatCode: string
-  ticketType: string
-  qrCode: string
-  zoneName: string
-  quantity: number
-  ishaveSeatmap: boolean
-  logo: string
-  banner: string
-}
-
-interface TicketApiResponse {
-  code: number
-  message: string
-  result: {
-    items: TicketApiItem[]
-    currentPage: number
-    totalPages: number
-    totalElements: number
-    pageSize: number
-  }
+  id: string; // Added for FlatList keyExtractor
+  eventId: number;
+  eventActivityId: number;
+  ticketPurchaseId: number;
+  eventCategoryId: number;
+  eventName: string;
+  eventDate: string;
+  eventStartTime: string;
+  timeBuyTicket: string;
+  locationName: string;
+  location: string;
+  price: number;
+  seatCode: string;
+  ticketType: string;
+  qrCode: string;
+  zoneName: string;
+  quantity: number;
+  ishaveSeatmap: boolean;
+  logo: string;
+  banner: string;
+  status: string; // Added for status display
 }
 
 type RootStackParamList = {
@@ -66,67 +43,61 @@ const TicketsScreen = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
   const navigation = useNavigation<any>()
   const { token } = useAuth()
+  const [sortDirection, setSortDirection] = useState("5") // Default sort direction
 
-  const loadTickets = async () => {
+  const loadTickets = async (page = 1, refresh = false) => {
     try {
-      setLoading(true)
-      const response = await fetchUserTickets(token || "")
-      console.log("Tickets API response:", response)
-
-      // Type guard to check if response matches our expected structure
-      const isValidResponse = (res: any): res is TicketApiResponse => {
-        return (
-          res &&
-          typeof res === "object" &&
-          "code" in res &&
-          "message" in res &&
-          "result" in res &&
-          res.result &&
-          "items" in res.result &&
-          Array.isArray(res.result.items)
-        )
-      }
-
-      if (isValidResponse(response)) {
-        // Map API items to our Ticket interface with correct type for status
-        const mappedTickets: Ticket[] = response.result.items.map((item) => ({
-          id: item.ticketPurchaseId.toString(),
-          eventId: item.eventId.toString(),
-          eventTitle: item.eventName,
-          eventDate: item.eventDate,
-          eventLocation: item.location || item.locationName,
-          ticketType: item.ticketType,
-          status: "unused" as const, // Use const assertion to ensure correct type
-          qrCode: item.qrCode,
-          price: item.price,
-          quantity: item.quantity,
-        }))
-
-        console.log("Mapped tickets:", mappedTickets)
-        setTickets(mappedTickets)
+      if (page === 1) {
+        setLoading(true);
       } else {
-        console.error("Invalid API response structure:", response)
-        setTickets([])
+        setLoadingMore(true);
+      }
+      
+      const response = await fetchUserTickets(token || "", page, sortDirection);
+      
+      if (response) {
+        const newTickets = response.tickets;
+        
+        // Update pagination info
+        setCurrentPage(response.pagination.currentPage);
+        setTotalPages(response.pagination.totalPages);
+        
+        // If refreshing or first page, replace tickets
+        // Otherwise append to existing tickets
+        if (refresh || page === 1) {
+          setTickets(newTickets);
+        } else {
+          setTickets(prevTickets => [...prevTickets, ...newTickets]);
+        }
       }
     } catch (error) {
-      console.error("Error loading tickets:", error)
-      setTickets([])
+      console.error("Error loading tickets:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   const onRefresh = async () => {
-    setRefreshing(true)
-    await loadTickets()
-    setRefreshing(false)
+    setRefreshing(true);
+    await loadTickets(1, true);
+    setRefreshing(false);
+  }
+
+  const loadMoreTickets = () => {
+    if (currentPage < totalPages && !loadingMore) {
+      loadTickets(currentPage + 1);
+    }
   }
 
   useEffect(() => {
-    loadTickets()
-  }, [])
+    loadTickets();
+  }, [sortDirection]); // Reload when sort direction changes
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -144,7 +115,7 @@ const TicketsScreen = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "unused":
-        return "Not Used"
+        return "Chưa sử dụng"
       case "checked_in":
         return "Checked In"
       case "checked_out":
@@ -162,8 +133,8 @@ const TicketsScreen = () => {
 
   const filteredTickets = tickets.filter((ticket) => {
     const matchesSearch =
-      ticket.eventTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.eventLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.ticketType.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesFilter = filterStatus ? ticket.status === filterStatus : true
@@ -176,23 +147,27 @@ const TicketsScreen = () => {
       <Card style={styles.card}>
         <Card.Content>
           <View style={styles.cardHeader}>
-            <Text style={styles.eventTitle}>{item.eventTitle}</Text>
+            <Text style={styles.eventTitle}>{item.eventName}</Text>
             <Badge style={{ backgroundColor: getStatusColor(item.status) }}>{getStatusText(item.status)}</Badge>
           </View>
 
           <View style={styles.ticketInfo}>
             <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-            <Text style={styles.infoText}>{item.eventDate}</Text>
+            <Text style={styles.infoText}>
+              {item.eventDate} {item.eventStartTime && `${item.eventStartTime}`}
+            </Text>
           </View>
 
           <View style={styles.ticketInfo}>
             <Ionicons name="location-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-            <Text style={styles.infoText}>{item.eventLocation}</Text>
+            <Text style={styles.infoText}>{item.location}</Text>
           </View>
 
           <View style={styles.ticketInfo}>
             <Ionicons name="ticket-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-            <Text style={styles.ticketType}>{item.ticketType}</Text>
+            <Text style={styles.ticketType}>
+              {item.ticketType}{item.zoneName ? ` - ${item.zoneName}` : ""}
+            </Text>
           </View>
 
           {item.price !== undefined && (
@@ -205,7 +180,7 @@ const TicketsScreen = () => {
           {item.quantity !== undefined && item.quantity > 1 && (
             <View style={styles.ticketInfo}>
               <Ionicons name="layers-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-              <Text style={styles.infoText}>Quantity: {item.quantity}</Text>
+              <Text style={styles.infoText}>Số lượng: {item.quantity}</Text>
             </View>
           )}
 
@@ -217,7 +192,7 @@ const TicketsScreen = () => {
               labelStyle={styles.buttonLabel}
               icon="eye-outline"
             >
-              View Details
+              Xem chi tiết
             </Button>
           </View>
         </Card.Content>
@@ -225,10 +200,23 @@ const TicketsScreen = () => {
     </TouchableOpacity>
   )
 
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+        <Text style={styles.loadingMoreText}>Loading more tickets...</Text>
+      </View>
+    );
+  };
+
+
+
   return (
     <View style={styles.container}>
       <Searchbar
-        placeholder="Search tickets"
+        placeholder="Tìm kiếm vé ..."
         onChangeText={onChangeSearch}
         value={searchQuery}
         style={styles.searchBar}
@@ -238,7 +226,10 @@ const TicketsScreen = () => {
       />
 
       <View style={styles.filterContainer}>
-        <Text style={styles.filterLabel}>Filter by:</Text>
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>Xếp theo:</Text>
+          
+        </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer}>
           <Chip
             selected={filterStatus === null}
@@ -246,7 +237,7 @@ const TicketsScreen = () => {
             style={[styles.chip, filterStatus === null && styles.selectedChip]}
             textStyle={[styles.chipText, filterStatus === null && styles.selectedChipText]}
           >
-            All
+            Tất cả
           </Chip>
           <Chip
             selected={filterStatus === "unused"}
@@ -254,7 +245,7 @@ const TicketsScreen = () => {
             style={[styles.chip, filterStatus === "unused" && styles.selectedChip]}
             textStyle={[styles.chipText, filterStatus === "unused" && styles.selectedChipText]}
           >
-            Not Used
+            Chưa sử dụng
           </Chip>
           <Chip
             selected={filterStatus === "checked_in"}
@@ -281,6 +272,9 @@ const TicketsScreen = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
+        onEndReached={loadMoreTickets}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             {loading ? (
@@ -302,6 +296,14 @@ const TicketsScreen = () => {
           </View>
         }
       />
+      
+      {currentPage < totalPages && !loading && filteredTickets.length > 0 && (
+        <View style={styles.paginationInfo}>
+          <Text style={styles.paginationText}>
+            Page {currentPage} of {totalPages}
+          </Text>
+        </View>
+      )}
     </View>
   )
 }
@@ -324,10 +326,28 @@ const styles = StyleSheet.create({
   filterContainer: {
     marginBottom: 16,
   },
+  filterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   filterLabel: {
     color: COLORS.textSecondary,
     marginBottom: 8,
     fontSize: 14,
+  },
+  sortContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  sortOptions: {
+    paddingRight: 16,
+  },
+  sortChip: {
+    backgroundColor: COLORS.card,
+    marginRight: 8,
+    height: 32,
   },
   chipContainer: {
     paddingRight: 16,
@@ -419,6 +439,27 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 8,
     textAlign: "center",
+  },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  loadingMoreText: {
+    color: COLORS.textSecondary,
+    marginLeft: 8,
+  },
+  paginationInfo: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: COLORS.card,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  paginationText: {
+    color: COLORS.textSecondary,
+    fontSize: 14,
   },
 })
 
