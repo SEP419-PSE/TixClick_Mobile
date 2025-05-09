@@ -115,7 +115,7 @@ const TicketsScreen = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "unused":
-        return "Not Used"
+        return "Chưa sử dụng"
       case "checked_in":
         return "Checked In"
       case "checked_out":
@@ -180,7 +180,7 @@ const TicketsScreen = () => {
           {item.quantity !== undefined && item.quantity > 1 && (
             <View style={styles.ticketInfo}>
               <Ionicons name="layers-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-              <Text style={styles.infoText}>Quantity: {item.quantity}</Text>
+              <Text style={styles.infoText}>Số lượng: {item.quantity}</Text>
             </View>
           )}
 
@@ -192,7 +192,7 @@ const TicketsScreen = () => {
               labelStyle={styles.buttonLabel}
               icon="eye-outline"
             >
-              View Details
+              Xem chi tiết
             </Button>
           </View>
         </Card.Content>
@@ -211,18 +211,12 @@ const TicketsScreen = () => {
     );
   };
 
-  // Sort options
-  const sortOptions = [
-    { label: "Newest First", value: "5" },
-    { label: "Oldest First", value: "6" },
-    { label: "Price: High to Low", value: "3" },
-    { label: "Price: Low to High", value: "4" },
-  ];
+
 
   return (
     <View style={styles.container}>
       <Searchbar
-        placeholder="Search tickets"
+        placeholder="Tìm kiếm vé ..."
         onChangeText={onChangeSearch}
         value={searchQuery}
         style={styles.searchBar}
@@ -233,23 +227,8 @@ const TicketsScreen = () => {
 
       <View style={styles.filterContainer}>
         <View style={styles.filterRow}>
-          <Text style={styles.filterLabel}>Filter by:</Text>
-          <View style={styles.sortContainer}>
-            <Text style={styles.filterLabel}>Sort:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortOptions}>
-              {sortOptions.map((option) => (
-                <Chip
-                  key={option.value}
-                  selected={sortDirection === option.value}
-                  onPress={() => setSortDirection(option.value)}
-                  style={[styles.sortChip, sortDirection === option.value && styles.selectedChip]}
-                  textStyle={[styles.chipText, sortDirection === option.value && styles.selectedChipText]}
-                >
-                  {option.label}
-                </Chip>
-              ))}
-            </ScrollView>
-          </View>
+          <Text style={styles.filterLabel}>Xếp theo:</Text>
+          
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer}>
           <Chip
@@ -258,7 +237,7 @@ const TicketsScreen = () => {
             style={[styles.chip, filterStatus === null && styles.selectedChip]}
             textStyle={[styles.chipText, filterStatus === null && styles.selectedChipText]}
           >
-            All
+            Tất cả
           </Chip>
           <Chip
             selected={filterStatus === "unused"}
@@ -266,7 +245,7 @@ const TicketsScreen = () => {
             style={[styles.chip, filterStatus === "unused" && styles.selectedChip]}
             textStyle={[styles.chipText, filterStatus === "unused" && styles.selectedChipText]}
           >
-            Not Used
+            Chưa sử dụng
           </Chip>
           <Chip
             selected={filterStatus === "checked_in"}
