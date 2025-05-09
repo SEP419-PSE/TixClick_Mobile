@@ -91,45 +91,47 @@ export const loginUser = async (userName: string, password: string): Promise<Api
 };
 
 
-
-export const fetchUserTickets = async (token: string): Promise<Ticket[]> => {
+export const fetchUserTickets = async (token: string, page = 1, sortDirection = "5"): Promise<Ticket[]> => {
   try {
-    console.log("Fetching user tickets");
-    
-    const response = await fetch(`${API_BASE_URL}/ticket-purchase/all_of_account`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'accept': '*/*'
-      },
-    });
+    console.log("Fetching user tickets")
 
-    const data = await response.json();
-    console.log("Tickets API response:", data);
+    const response = await fetch(
+      `${API_BASE_URL}/ticket-purchase/all_of_account?page=${page}&sortDirection=${sortDirection}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          accept: "*/*",
+        },
+      },
+    )
+
+    const data = await response.json()
+    console.log("Tickets API response:", data)
 
     if (data.code === 0 || data.code === 200) {
       return data.result.map((item: any) => ({
-        id: item.seatCode || String(Math.random()), 
+        id: item.seatCode || String(Math.random()),
         eventId: String(item.eventId),
         eventTitle: item.eventName,
-        eventDate: item.eventDate + (item.eventStartTime ? 
-          ` ${item.eventStartTime.hour}:${item.eventStartTime.minute}` : ''),
+        eventDate:
+          item.eventDate + (item.eventStartTime ? ` ${item.eventStartTime.hour}:${item.eventStartTime.minute}` : ""),
         eventLocation: item.location,
-        ticketType: `${item.ticketType}${item.zoneName ? ` - ${item.zoneName}` : ''}`,
+        ticketType: `${item.ticketType}${item.zoneName ? ` - ${item.zoneName}` : ""}`,
         status: "unused",
         qrCode: item.qrCode,
         price: item.price,
-        quantity: item.quantity
-      }));
+        quantity: item.quantity,
+      }))
     } else {
-      console.error("Failed to fetch tickets:", data.message);
-      return [];
+      console.error("Failed to fetch tickets:", data.message)
+      return []
     }
   } catch (error) {
-    console.error("Tickets API error:", error);
-    throw new Error('Could not connect to server, please check your network connection');
+    console.error("Tickets API error:", error)
+    throw new Error("Could not connect to server, please check your network connection")
   }
-};
+}
 
 

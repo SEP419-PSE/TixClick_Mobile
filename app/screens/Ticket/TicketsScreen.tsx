@@ -1,13 +1,12 @@
 import { useAuth } from "@/app/context/AuthContext"
+import { COLORS } from "@/app/utils/theme"
+import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { useEffect, useState } from "react"
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { ActivityIndicator, Badge, Button, Card, Chip, Searchbar } from "react-native-paper"
-import { fetchUserTickets } from "../../lib/api" 
-import { COLORS } from "@/app/utils/theme"
-import { Ionicons } from "@expo/vector-icons"
 import { ScrollView } from "react-native-gesture-handler"
-
+import { ActivityIndicator, Badge, Button, Card, Chip, Searchbar } from "react-native-paper"
+import { fetchUserTickets } from "../../lib/api"
 
 export interface Ticket {
   id: string
@@ -22,15 +21,50 @@ export interface Ticket {
   quantity?: number
 }
 
+// Define the API response structure based on the exact JSON provided
+interface TicketApiItem {
+  eventId: number
+  eventActivityId: number
+  ticketPurchaseId: number
+  eventCategoryId: number
+  eventName: string
+  eventDate: string
+  eventStartTime: string
+  timeBuyTicket: string
+  locationName: string
+  location: string
+  price: number
+  seatCode: string
+  ticketType: string
+  qrCode: string
+  zoneName: string
+  quantity: number
+  ishaveSeatmap: boolean
+  logo: string
+  banner: string
+}
+
+interface TicketApiResponse {
+  code: number
+  message: string
+  result: {
+    items: TicketApiItem[]
+    currentPage: number
+    totalPages: number
+    totalElements: number
+    pageSize: number
+  }
+}
+
 type RootStackParamList = {
-  TicketDetails: { ticket: Ticket };
-};
+  TicketDetails: { ticket: Ticket }
+}
 
 const TicketsScreen = () => {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string | null>(null)
   const navigation = useNavigation<any>()
   const { token } = useAuth()
@@ -38,11 +72,47 @@ const TicketsScreen = () => {
   const loadTickets = async () => {
     try {
       setLoading(true)
-      const data = await fetchUserTickets(token || "")
-      console.log("Tickets data:", data)
-      setTickets(data)
+      const response = await fetchUserTickets(token || "")
+      console.log("Tickets API response:", response)
+
+      // Type guard to check if response matches our expected structure
+      const isValidResponse = (res: any): res is TicketApiResponse => {
+        return (
+          res &&
+          typeof res === "object" &&
+          "code" in res &&
+          "message" in res &&
+          "result" in res &&
+          res.result &&
+          "items" in res.result &&
+          Array.isArray(res.result.items)
+        )
+      }
+
+      if (isValidResponse(response)) {
+        // Map API items to our Ticket interface with correct type for status
+        const mappedTickets: Ticket[] = response.result.items.map((item) => ({
+          id: item.ticketPurchaseId.toString(),
+          eventId: item.eventId.toString(),
+          eventTitle: item.eventName,
+          eventDate: item.eventDate,
+          eventLocation: item.location || item.locationName,
+          ticketType: item.ticketType,
+          status: "unused" as const, // Use const assertion to ensure correct type
+          qrCode: item.qrCode,
+          price: item.price,
+          quantity: item.quantity,
+        }))
+
+        console.log("Mapped tickets:", mappedTickets)
+        setTickets(mappedTickets)
+      } else {
+        console.error("Invalid API response structure:", response)
+        setTickets([])
+      }
     } catch (error) {
       console.error("Error loading tickets:", error)
+      setTickets([])
     } finally {
       setLoading(false)
     }
@@ -61,11 +131,11 @@ const TicketsScreen = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "unused":
-        return COLORS.statusUnused 
+        return COLORS.statusUnused
       case "checked_in":
-        return COLORS.statusCheckedIn 
+        return COLORS.statusCheckedIn
       case "checked_out":
-        return COLORS.statusCheckedOut 
+        return COLORS.statusCheckedOut
       default:
         return COLORS.statusUnused
     }
@@ -85,20 +155,21 @@ const TicketsScreen = () => {
   }
 
   const handleViewDetails = (ticket: Ticket) => {
-    navigation.navigate('TicketDetails', { ticket })
+    navigation.navigate("TicketDetails", { ticket })
   }
 
-  const onChangeSearch = (query: string) => setSearchQuery(query);
+  const onChangeSearch = (query: string) => setSearchQuery(query)
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.eventTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ticket.eventLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ticket.ticketType.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = filterStatus ? ticket.status === filterStatus : true;
-    
-    return matchesSearch && matchesFilter;
-  });
+  const filteredTickets = tickets.filter((ticket) => {
+    const matchesSearch =
+      ticket.eventTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.eventLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.ticketType.toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesFilter = filterStatus ? ticket.status === filterStatus : true
+
+    return matchesSearch && matchesFilter
+  })
 
   const renderTicketCard = ({ item }: { item: Ticket }) => (
     <TouchableOpacity onPress={() => handleViewDetails(item)}>
@@ -113,24 +184,24 @@ const TicketsScreen = () => {
             <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
             <Text style={styles.infoText}>{item.eventDate}</Text>
           </View>
-          
+
           <View style={styles.ticketInfo}>
             <Ionicons name="location-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
             <Text style={styles.infoText}>{item.eventLocation}</Text>
           </View>
-          
+
           <View style={styles.ticketInfo}>
             <Ionicons name="ticket-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
             <Text style={styles.ticketType}>{item.ticketType}</Text>
           </View>
-          
+
           {item.price !== undefined && (
             <View style={styles.ticketInfo}>
               <Ionicons name="pricetag-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
               <Text style={styles.ticketPrice}>{item.price.toLocaleString()} VND</Text>
             </View>
           )}
-          
+
           {item.quantity !== undefined && item.quantity > 1 && (
             <View style={styles.ticketInfo}>
               <Ionicons name="layers-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
@@ -165,45 +236,45 @@ const TicketsScreen = () => {
         iconColor={COLORS.primary}
         placeholderTextColor={COLORS.textSecondary}
       />
-      
+
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter by:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer}>
-          <Chip 
-            selected={filterStatus === null} 
+          <Chip
+            selected={filterStatus === null}
             onPress={() => setFilterStatus(null)}
             style={[styles.chip, filterStatus === null && styles.selectedChip]}
             textStyle={[styles.chipText, filterStatus === null && styles.selectedChipText]}
           >
             All
           </Chip>
-          <Chip 
-            selected={filterStatus === 'unused'} 
-            onPress={() => setFilterStatus('unused')}
-            style={[styles.chip, filterStatus === 'unused' && styles.selectedChip]}
-            textStyle={[styles.chipText, filterStatus === 'unused' && styles.selectedChipText]}
+          <Chip
+            selected={filterStatus === "unused"}
+            onPress={() => setFilterStatus("unused")}
+            style={[styles.chip, filterStatus === "unused" && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === "unused" && styles.selectedChipText]}
           >
             Not Used
           </Chip>
-          <Chip 
-            selected={filterStatus === 'checked_in'} 
-            onPress={() => setFilterStatus('checked_in')}
-            style={[styles.chip, filterStatus === 'checked_in' && styles.selectedChip]}
-            textStyle={[styles.chipText, filterStatus === 'checked_in' && styles.selectedChipText]}
+          <Chip
+            selected={filterStatus === "checked_in"}
+            onPress={() => setFilterStatus("checked_in")}
+            style={[styles.chip, filterStatus === "checked_in" && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === "checked_in" && styles.selectedChipText]}
           >
             Checked In
           </Chip>
-          <Chip 
-            selected={filterStatus === 'checked_out'} 
-            onPress={() => setFilterStatus('checked_out')}
-            style={[styles.chip, filterStatus === 'checked_out' && styles.selectedChip]}
-            textStyle={[styles.chipText, filterStatus === 'checked_out' && styles.selectedChipText]}
+          <Chip
+            selected={filterStatus === "checked_out"}
+            onPress={() => setFilterStatus("checked_out")}
+            style={[styles.chip, filterStatus === "checked_out" && styles.selectedChip]}
+            textStyle={[styles.chipText, filterStatus === "checked_out" && styles.selectedChipText]}
           >
             Checked Out
           </Chip>
         </ScrollView>
       </View>
-      
+
       <FlatList
         data={filteredTickets}
         renderItem={renderTicketCard}
@@ -222,7 +293,9 @@ const TicketsScreen = () => {
                 <Ionicons name="ticket-outline" size={64} color={COLORS.textSecondary} />
                 <Text style={styles.emptyText}>No tickets found</Text>
                 <Text style={styles.emptySubtext}>
-                  {searchQuery || filterStatus ? 'Try changing your search or filter' : 'Purchase tickets to see them here'}
+                  {searchQuery || filterStatus
+                    ? "Try changing your search or filter"
+                    : "Purchase tickets to see them here"}
                 </Text>
               </>
             )}
@@ -347,6 +420,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
-});
+})
 
-export default TicketsScreen;
+export default TicketsScreen

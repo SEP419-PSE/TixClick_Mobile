@@ -104,17 +104,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   
-
-  const logout = async () => {
+  const logout = async (extraKeysToClear: string[] = []) => {
     try {
       console.log("Logging out...");
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("role");
-
+      const keys = ["token", "role", ...extraKeysToClear];
+      await AsyncStorage.multiRemove(keys);
+  
       setToken(null);
       setRole(null);
       setIsLoggedIn(false);
-
+  
       console.log("Logout successful");
     } catch (error) {
       console.error("Logout error:", error);
