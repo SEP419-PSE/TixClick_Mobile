@@ -8,9 +8,8 @@ import { ScrollView } from "react-native-gesture-handler"
 import { ActivityIndicator, Badge, Button, Card, Chip, Searchbar } from "react-native-paper"
 import { fetchUserTickets } from "../../lib/api"
 
-// Define the Ticket interface
 export interface Ticket {
-  id: string; // Added for FlatList keyExtractor
+  id: string; 
   eventId: number;
   eventActivityId: number;
   ticketPurchaseId: number;
@@ -30,8 +29,21 @@ export interface Ticket {
   ishaveSeatmap: boolean;
   logo: string;
   banner: string;
-  status: string; // Added for status display
+  status: string;
+  TicketPurchase: TicketPurchase[];
 }
+
+export interface TicketPurchase {
+  orderCode: string;
+  prrice: number;
+  quantity: number;
+  seatCode: string;
+  ticketPurchaseId: number;
+  ticketType: string;
+  zoneName: string;
+}
+
+
 
 type RootStackParamList = {
   TicketDetails: { ticket: Ticket }
@@ -48,7 +60,7 @@ const TicketsScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false)
   const navigation = useNavigation<any>()
   const { token } = useAuth()
-  const [sortDirection, setSortDirection] = useState("5") // Default sort direction
+  const [sortDirection, setSortDirection] = useState("5")
 
   const loadTickets = async (page = 1, refresh = false) => {
     try {
@@ -63,12 +75,9 @@ const TicketsScreen = () => {
       if (response) {
         const newTickets = response.tickets;
         
-        // Update pagination info
         setCurrentPage(response.pagination.currentPage);
         setTotalPages(response.pagination.totalPages);
         
-        // If refreshing or first page, replace tickets
-        // Otherwise append to existing tickets
         if (refresh || page === 1) {
           setTickets(newTickets);
         } else {
@@ -97,7 +106,7 @@ const TicketsScreen = () => {
 
   useEffect(() => {
     loadTickets();
-  }, [sortDirection]); // Reload when sort direction changes
+  }, [sortDirection]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -133,72 +142,85 @@ const TicketsScreen = () => {
 
   const filteredTickets = tickets.filter((ticket) => {
     const matchesSearch =
-      ticket.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.ticketType.toLowerCase().includes(searchQuery.toLowerCase())
+      ticket?.eventName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket?.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket?.ticketType?.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesFilter = filterStatus ? ticket.status === filterStatus : true
+    const matchesFilter = filterStatus ? ticket?.status === filterStatus : true
 
     return matchesSearch && matchesFilter
   })
 
-  const renderTicketCard = ({ item }: { item: Ticket }) => (
-    <TouchableOpacity onPress={() => handleViewDetails(item)}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <View style={styles.cardHeader}>
-            <Text style={styles.eventTitle}>{item.eventName}</Text>
-            <Badge style={{ backgroundColor: getStatusColor(item.status) }}>{getStatusText(item.status)}</Badge>
-          </View>
-
-          <View style={styles.ticketInfo}>
-            <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-            <Text style={styles.infoText}>
-              {item.eventDate} {item.eventStartTime && `${item.eventStartTime}`}
-            </Text>
-          </View>
-
-          <View style={styles.ticketInfo}>
-            <Ionicons name="location-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-            <Text style={styles.infoText}>{item.location}</Text>
-          </View>
-
-          <View style={styles.ticketInfo}>
-            <Ionicons name="ticket-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-            <Text style={styles.ticketType}>
-              {item.ticketType}{item.zoneName ? ` - ${item.zoneName}` : ""}
-            </Text>
-          </View>
-
-          {item.price !== undefined && (
-            <View style={styles.ticketInfo}>
-              <Ionicons name="pricetag-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-              <Text style={styles.ticketPrice}>{item.price.toLocaleString()} VND</Text>
+  // Fixed renderTicketCard with proper null checks
+  const renderTicketCard = ({ item }: { item: Ticket }) => {
+    // Add null checks for item and its properties
+    if (!item) return null;
+    
+    const firstTicketPurchase = item.TicketPurchase?.[0];
+    
+    return (
+      <TouchableOpacity onPress={() => handleViewDetails(item)}>
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Text style={styles.eventTitle}>{item.eventName || 'Unknown Event'}</Text>
+              <Badge style={{ backgroundColor: getStatusColor(item.status || '') }}>
+                {getStatusText(item.status || '')}
+              </Badge>
             </View>
-          )}
 
-          {item.quantity !== undefined && item.quantity > 1 && (
             <View style={styles.ticketInfo}>
-              <Ionicons name="layers-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
-              <Text style={styles.infoText}>Số lượng: {item.quantity}</Text>
+              <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+              <Text style={styles.infoText}>
+                {item.eventDate || 'TBD'} {item.eventStartTime && `${item.eventStartTime}`}
+              </Text>
             </View>
-          )}
 
-          <View style={styles.cardActions}>
-            <Button
-              mode="contained"
-              onPress={() => handleViewDetails(item)}
-              style={styles.viewButton}
-              labelStyle={styles.buttonLabel}
-              icon="eye-outline"
-            >
-              Xem chi tiết
-            </Button>
-          </View>
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
-  )
+            <View style={styles.ticketInfo}>
+              <Ionicons name="location-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+              <Text style={styles.infoText}>{item.location || 'Location TBD'}</Text>
+            </View>
+
+            {firstTicketPurchase && (
+              <View style={styles.ticketInfo}>
+                <Ionicons name="ticket-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+                <Text style={styles.ticketType}>
+                  {firstTicketPurchase.ticketType || 'General'} 
+                  {firstTicketPurchase.seatCode ? ` (${firstTicketPurchase.seatCode})` : ""}
+                </Text>
+              </View>
+            )}
+
+            {item.price !== undefined && (
+              <View style={styles.ticketInfo}>
+                <Ionicons name="pricetag-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+                <Text style={styles.ticketPrice}>{item.price.toLocaleString()} VND</Text>
+              </View>
+            )}
+
+            {item.quantity !== undefined && item.quantity > 1 && (
+              <View style={styles.ticketInfo}>
+                <Ionicons name="layers-outline" size={16} color={COLORS.primary} style={styles.infoIcon} />
+                <Text style={styles.infoText}>Số lượng: {item.quantity}</Text>
+              </View>
+            )}
+
+            <View style={styles.cardActions}>
+              <Button
+                mode="contained"
+                onPress={() => handleViewDetails(item)}
+                style={styles.viewButton}
+                labelStyle={styles.buttonLabel}
+                icon="eye-outline"
+              >
+                Xem chi tiết
+              </Button>
+            </View>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+    )
+  }
 
   const renderFooter = () => {
     if (!loadingMore) return null;
@@ -210,8 +232,6 @@ const TicketsScreen = () => {
       </View>
     );
   };
-
-
 
   return (
     <View style={styles.container}>
@@ -228,7 +248,6 @@ const TicketsScreen = () => {
       <View style={styles.filterContainer}>
         <View style={styles.filterRow}>
           <Text style={styles.filterLabel}>Xếp theo:</Text>
-          
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer}>
           <Chip
@@ -269,7 +288,7 @@ const TicketsScreen = () => {
       <FlatList
         data={filteredTickets}
         renderItem={renderTicketCard}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item?.id || index.toString()}
         contentContainerStyle={styles.listContainer}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
         onEndReached={loadMoreTickets}

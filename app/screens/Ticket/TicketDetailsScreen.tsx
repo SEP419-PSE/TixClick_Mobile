@@ -1,3 +1,5 @@
+import { useAuth } from '@/app/context/AuthContext';
+import { fetchUserTickets } from '@/app/lib/api';
 import { COLORS } from '@/app/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -6,18 +8,40 @@ import { Modal, Pressable, ScrollView, Share, StyleSheet, Text, TouchableOpacity
 import { Button, Card, Divider } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 
-type Ticket = {
-  id: string
-  eventId: string
-  eventTitle: string
-  eventDate: string
-  eventLocation: string
-  ticketType: string
-  status: "unused" | "checked_in" | "checked_out"
-  qrCode: string
-  price?: number
-  quantity?: number
-};
+export interface Ticket {
+  id: string; 
+  eventId: number;
+  eventActivityId: number;
+  ticketPurchaseId: number;
+  eventCategoryId: number;
+  eventName: string;
+  eventDate: string;
+  eventStartTime: string;
+  timeBuyTicket: string;
+  locationName: string;
+  location: string;
+  price: number;
+  seatCode: string;
+  ticketType: string;
+  qrCode: string;
+  zoneName: string;
+  quantity: number;
+  ishaveSeatmap: boolean;
+  logo: string;
+  banner: string;
+  status: string;
+  TicketPurchase: TicketPurchase[];
+}
+
+export interface TicketPurchase {
+  orderCode: string;
+  prrice: number;
+  quantity: number;
+  seatCode: string;
+  ticketPurchaseId: number;
+  ticketType: string;
+  zoneName: string;
+}
 
 type RouteParams = {
   ticket: Ticket;
@@ -27,6 +51,15 @@ const TicketDetailsScreen = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const { ticket } = route.params;
   const [showQR, setShowQR] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const { token } = useAuth()
+  const [sortDirection, setSortDirection] = useState("5")
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,13 +82,43 @@ const TicketDetailsScreen = () => {
   const handleShareTicket = async () => {
     try {
       await Share.share({
-        message: `Check out my ticket for ${ticket.eventTitle} on ${ticket.eventDate} at ${ticket.eventLocation}!`,
-        title: `${ticket.eventTitle} Ticket`,
+        message: `Check out my ticket for ${ticket.eventName} on ${ticket.eventDate} at ${ticket.locationName}!`,
+        title: `${ticket.eventName} Ticket`,
       });
     } catch (error) {
       console.error('Error sharing ticket:', error);
     }
   };
+
+   const loadTickets = async (page = 1, refresh = false) => {
+      try {
+        if (page === 1) {
+          setLoading(true);
+        } else {
+          setLoadingMore(true);
+        }
+        
+        const response = await fetchUserTickets(token || "", page, sortDirection);
+        
+        if (response) {
+          const newTickets = response.tickets;
+          
+          setCurrentPage(response.pagination.currentPage);
+          setTotalPages(response.pagination.totalPages);
+          
+          if (refresh || page === 1) {
+            setTickets(newTickets);
+          } else {
+            setTickets(prevTickets => [...prevTickets, ...newTickets]);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading tickets:", error);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
 
   return (
     <ScrollView style={styles.container}>
@@ -65,7 +128,7 @@ const TicketDetailsScreen = () => {
 
       <Card style={styles.card}>
         <Card.Content>
-          <Text style={styles.eventTitle}>{ticket.eventTitle}</Text>
+          <Text style={styles.eventTitle}>{ticket.eventName}</Text>
 
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
@@ -74,10 +137,10 @@ const TicketDetailsScreen = () => {
 
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
-            <Text style={styles.detailText}>{ticket.eventLocation}</Text>
+            <Text style={styles.detailText}>{ticket.locationName}</Text>
           </View>
 
-          <View style={styles.detailRow}>
+          {/* <View style={styles.detailRow}>
             <Ionicons name="ticket-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
             <Text style={styles.detailText}>{ticket.ticketType}</Text>
           </View>
@@ -87,19 +150,19 @@ const TicketDetailsScreen = () => {
               <Ionicons name="pricetag-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
               <Text style={styles.priceText}>{ticket.price.toLocaleString()} VND</Text>
             </View>
-          )}
+          )} */}
 
-          {ticket.quantity !== undefined && ticket.quantity > 1 && (
+          {/* {ticket.quantity !== undefined && ticket.quantity > 1 && (
             <View style={styles.detailRow}>
               <Ionicons name="layers-outline" size={20} color={COLORS.primary} style={styles.detailIcon} />
               <Text style={styles.detailText}>Số lượng: {ticket.quantity}</Text>
             </View>
-          )}
+          )} */}
 
           <Divider style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Vé :</Text>
-          <Text style={styles.ticketId}>{ticket.id}</Text>
+          {/* <Text style={styles.sectionTitle}>Vé :</Text>
+          <Text style={styles.ticketId}>{ticket.id}</Text> */}
 
           <TouchableOpacity
             style={styles.qrContainer}
