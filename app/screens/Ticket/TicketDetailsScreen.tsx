@@ -53,7 +53,7 @@ const TicketDetailsScreen = () => {
         title: `${ticket.eventTitle} Ticket`,
       });
     } catch (error) {
-      console.error('Error sharing ticket:', error);
+      // console.error('Error sharing ticket:', error);
     }
   };
 

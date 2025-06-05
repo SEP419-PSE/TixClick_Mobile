@@ -61,8 +61,6 @@ const MainTabs = () => (
 const AppNavigator = () => {
   const { isLoggedIn, isLoading } = useAuth();
 
-  console.log("Auth state in AppNavigator:", { isLoggedIn, isLoading });
-
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1E1E1E" }}>

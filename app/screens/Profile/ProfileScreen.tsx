@@ -47,7 +47,7 @@ const ProfileScreen = () => {
               // Call the logout function from AuthContext
               await logout()
 
-              console.log("Logout successful")
+              // console.log("Logout successful")
 
               // Reset navigation to Auth stack
               navigation.reset({
@@ -55,7 +55,7 @@ const ProfileScreen = () => {
                 routes: [{ name: "Login" as never }],
               })
             } catch (error) {
-              console.error("Logout error:", error)
+              // console.error("Logout error:", error)
               Alert.alert("Logout Failed", "There was a problem logging out. Please try again.")
             } finally {
               setIsLoggingOut(false)
